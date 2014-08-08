@@ -31,6 +31,9 @@
 		//Boolean - Whether to show a dot for each point
 		pointDot : true,
 
+		//Boolean - Whether to show each dot as a square
+		pointSquare : false,
+
 		//Number - Radius of each point dot in pixels
 		pointDotRadius : 4,
 
@@ -49,12 +52,17 @@
 		//Boolean - Whether to fill the dataset with a colour
 		datasetFill : true,
 
+		//Boolean - Whether to show candles for each point
+		candles : false,
+
+		//Number - Pixel width of candle stroke
+		candleStrokeWidth : 3,
+
 		//String - A legend template
 		legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].strokeColor%>\"><%if(datasets[i].label){%><%=datasets[i].label%><%}%></span></li><%}%></ul>",
 
 		//Boolean - Whether to horizontally center the label and point dot inside the grid
 		offsetGridLines : false
-
 	};
 
 
@@ -67,7 +75,8 @@
 				offsetGridLines : this.options.offsetGridLines,
 				strokeWidth : this.options.pointDotStrokeWidth,
 				radius : this.options.pointDotRadius,
-				display: this.options.pointDot,
+				display : this.options.pointDot,
+				square : this.options.pointSquare,
 				hitDetectionRadius : this.options.pointHitDetectionRadius,
 				ctx : this.chart.ctx,
 				inRange : function(mouseX){
@@ -99,8 +108,10 @@
 					label : dataset.label || null,
 					fillColor : dataset.fillColor,
 					strokeColor : dataset.strokeColor,
+					candleStrokeColor : dataset.candleStrokeColor,
 					pointColor : dataset.pointColor,
 					pointStrokeColor : dataset.pointStrokeColor,
+					dashStyle : dataset.dashStyle,
 					points : []
 				};
 
@@ -349,9 +360,14 @@
 								point.y
 							);
 						}
-						else{
+						else if (dataset.dashStyle instanceof Array){
+							helpers.drawDashedLine(ctx, dataset.points[index-1].x, dataset.points[index-1].y, point.x, point.y, dataset.dashStyle);
+						} else{
 							ctx.lineTo(point.x,point.y);
 						}
+					}
+					else if (!dataset.dashStyle){
+						ctx.moveTo(point.x,point.y);
 					}
 				}, this);
 
@@ -366,6 +382,19 @@
 					ctx.fill();
 				}
 
+
+				//Draw the candles from the base to the point
+				if (this.options.candles) {
+					ctx.lineWidth = this.options.candleStrokeWidth;
+					ctx.strokeStyle = dataset.candleStrokeColor;
+					helpers.each(dataset.points,function(point,index){
+						ctx.beginPath();
+						ctx.moveTo(point.x, this.scale.endPoint);
+						ctx.lineTo(point.x, point.y);
+						ctx.stroke();
+					},this)
+				}
+
 				//Now draw the points over the line
 				//A little inefficient double looping, but better than the line
 				//lagging behind the point positions
@@ -375,6 +404,5 @@
 			},this);
 		}
 	});
-
 
 }).call(this);
