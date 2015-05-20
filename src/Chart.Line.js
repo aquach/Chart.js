@@ -366,7 +366,8 @@
 							ctx.lineTo(point.x,point.y);
 						}
 					}
-					else if (!dataset.dashStyle){
+
+					if (!dataset.dashStyle){
 						ctx.moveTo(point.x,point.y);
 					}
 				}, this);
